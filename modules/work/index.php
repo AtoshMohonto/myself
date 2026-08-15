@@ -6,6 +6,17 @@ $active_page = 'work';
 $uid = my_id();
 
 $work_types = ['Official Job','Remote Job','Passive Income','Tuition','Student Consultation','Freelance','Other'];
+$weekday_names = [0 => 'Sun', 1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat'];
+
+function format_custom_days($custom_days) {
+    if (!$custom_days) return '';
+    $names = [0 => 'Sun', 1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat'];
+    $out = [];
+    foreach (explode(',', $custom_days) as $d) {
+        if (isset($names[(int) $d])) $out[] = $names[(int) $d];
+    }
+    return implode(', ', $out);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf($_POST['csrf_token'] ?? '')) {
@@ -34,17 +45,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $recurrence_type = $is_recurring ? ($_POST['recurrence_type'] ?? 'Weekly') : 'None';
     $notes = sanitize($_POST['notes'] ?? '');
 
+    $custom_days = '';
+    if ($recurrence_type === 'Custom') {
+        $days = [];
+        foreach ((array) ($_POST['custom_days'] ?? []) as $d) {
+            $d = (int) $d;
+            if ($d >= 0 && $d <= 6 && !in_array($d, $days)) $days[] = $d;
+        }
+        sort($days);
+        $custom_days = implode(',', $days);
+    }
+
     if ($title === '') {
         redirect('modules/work/index.php', 'Title is required.', 'danger');
     }
 
     if ($id > 0) {
-        db_query("UPDATE work_schedules SET work_type=?, title=?, organization=?, schedule_date=?, start_time=?, end_time=?, is_recurring=?, recurrence_type=?, notes=? WHERE id=? AND user_id=?",
-            [$work_type, $title, $organization, $schedule_date, $start_time, $end_time, $is_recurring, $recurrence_type, $notes, $id, $uid]);
+        db_query("UPDATE work_schedules SET work_type=?, title=?, organization=?, schedule_date=?, start_time=?, end_time=?, is_recurring=?, recurrence_type=?, custom_days=?, notes=? WHERE id=? AND user_id=?",
+            [$work_type, $title, $organization, $schedule_date, $start_time, $end_time, $is_recurring, $recurrence_type, $custom_days, $notes, $id, $uid]);
         redirect('modules/work/index.php', 'Entry updated.', 'success');
     } else {
-        db_query("INSERT INTO work_schedules (user_id, work_type, title, organization, schedule_date, start_time, end_time, is_recurring, recurrence_type, notes) VALUES (?,?,?,?,?,?,?,?,?,?)",
-            [$uid, $work_type, $title, $organization, $schedule_date, $start_time, $end_time, $is_recurring, $recurrence_type, $notes]);
+        db_query("INSERT INTO work_schedules (user_id, work_type, title, organization, schedule_date, start_time, end_time, is_recurring, recurrence_type, custom_days, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            [$uid, $work_type, $title, $organization, $schedule_date, $start_time, $end_time, $is_recurring, $recurrence_type, $custom_days, $notes]);
         log_activity('Added work schedule: ' . $title);
         redirect('modules/work/index.php', 'Entry added.', 'success');
     }
@@ -112,12 +134,25 @@ include __DIR__ . '/../../templates/sidebar.php';
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Repeats</label>
-                    <select name="recurrence_type" class="form-select">
-                        <?php foreach (['Daily','Weekly','Monthly'] as $r): ?><option value="<?= $r ?>" <?= ($editWork['recurrence_type'] ?? '') === $r ? 'selected' : '' ?>><?= $r ?></option><?php endforeach; ?>
+                    <select name="recurrence_type" id="workRecurrenceType" class="form-select">
+                        <?php foreach (['Daily','Weekly','Monthly','Custom'] as $r): ?><option value="<?= $r ?>" <?= ($editWork['recurrence_type'] ?? '') === $r ? 'selected' : '' ?>><?= $r ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <button class="btn btn-primary w-100"><?= $editWork ? 'Update' : 'Add' ?></button>
+                </div>
+                <div class="col-md-12" id="workCustomDays" style="display:none;">
+                    <label class="form-label fw-bold d-block">Repeat on Days</label>
+                    <?php
+                    $saved_days = $editWork ? array_map('intval', array_filter(explode(',', $editWork['custom_days'] ?? ''))) : [];
+                    foreach ($weekday_names as $d => $name):
+                    ?>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="custom_days[]" id="wd<?= $d ?>" value="<?= $d ?>" <?= in_array($d, $saved_days, true) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="wd<?= $d ?>"><?= $name ?></label>
+                    </div>
+                    <?php endforeach; ?>
+                    <div class="form-text">Pick the weekdays this repeats on. Time is set via Start/End above.</div>
                 </div>
                 <div class="col-md-12">
                     <label class="form-label fw-bold">Notes</label>
@@ -148,10 +183,16 @@ include __DIR__ . '/../../templates/sidebar.php';
                         <tr><td colspan="7" class="text-center text-muted py-3">No work entries yet.</td></tr>
                     <?php else: foreach ($works as $w): ?>
                         <tr>
-                            <td class="fw-bold"><?= sanitize($w['title']) ?><?= $w['is_recurring'] ? ' <i class="fas fa-repeat text-muted ms-1"></i>' : '' ?></td>
+                            <td class="fw-bold"><?= sanitize($w['title']) ?><?php if ($w['is_recurring']): ?><i class="fas fa-repeat text-muted ms-1" title="<?= $w['recurrence_type'] ?><?= $w['recurrence_type'] === 'Custom' && $w['custom_days'] ? ': ' . format_custom_days($w['custom_days']) : '' ?>"></i><?php endif; ?></td>
                             <td><span class="badge bg-light text-dark"><?= $w['work_type'] ?></span></td>
                             <td><?= sanitize($w['organization'] ?? '-') ?></td>
-                            <td><?= $w['schedule_date'] ? format_date($w['schedule_date']) : '-' ?></td>
+                            <td>
+                                <?php if ($w['recurrence_type'] === 'Custom' && $w['custom_days']): ?>
+                                    <span class="badge bg-info-subtle text-dark"><?= format_custom_days($w['custom_days']) ?></span>
+                                <?php else: ?>
+                                    <?= $w['schedule_date'] ? format_date($w['schedule_date']) : '-' ?>
+                                <?php endif; ?>
+                            </td>
                             <td class="text-sm"><?= $w['start_time'] ? format_time($w['start_time']) : '-' ?></td>
                             <td>
                                 <form method="POST" class="d-inline">
@@ -173,4 +214,18 @@ include __DIR__ . '/../../templates/sidebar.php';
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var recurType = document.getElementById('workRecurrenceType');
+    var customDays = document.getElementById('workCustomDays');
+    function syncCustomDays() {
+        var show = recurType.value === 'Custom';
+        customDays.style.display = show ? '' : 'none';
+    }
+    if (recurType && customDays) {
+        recurType.addEventListener('change', syncCustomDays);
+        syncCustomDays();
+    }
+});
+</script>
 <?php include __DIR__ . '/../../templates/footer.php'; ?>

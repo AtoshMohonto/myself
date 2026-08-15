@@ -243,6 +243,19 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         isDelete TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )",
+    "finance_reminders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        type ENUM('Income','Expense') DEFAULT 'Expense',
+        category VARCHAR(50) DEFAULT 'Other',
+        amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        due_date DATE NOT NULL,
+        status ENUM('Upcoming','Paid','Overdue') DEFAULT 'Upcoming',
+        notes TEXT,
+        isDelete TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )",
     ];
 
     foreach ($tables as $ddl) {
@@ -252,6 +265,16 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         } else {
             echo '<div class="small text-danger">✗ ' . htmlspecialchars($tableName) . ': ' . $conn->error . '</div>';
         }
+    }
+
+    // --- Migrations for existing tables (safe to re-run) ---
+    // Work schedules: add Custom recurrence option (choose your own weekdays + time)
+    $conn->query("ALTER TABLE work_schedules MODIFY COLUMN recurrence_type ENUM('None','Daily','Weekly','Monthly','Custom') DEFAULT 'None'");
+    $colRes = $conn->query("SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'work_schedules' AND COLUMN_NAME = 'custom_days'");
+    $colRow = $colRes->fetch_assoc();
+    if ((int) ($colRow['c'] ?? 0) === 0) {
+        $conn->query("ALTER TABLE work_schedules ADD COLUMN custom_days VARCHAR(20) DEFAULT NULL AFTER recurrence_type");
+        echo '<div class="small text-success">✓ work_schedules.custom_days added (Custom repeat days)</div>';
     }
 
     // Seed owner account — first user is always an active Admin

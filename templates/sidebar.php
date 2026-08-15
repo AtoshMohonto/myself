@@ -39,6 +39,9 @@
     <div class="nav-item <?= $active_page === 'finance' ? 'active' : '' ?>">
         <a class="nav-link" href="<?= BASE_URL ?>modules/finance/index.php"><i class="fas fa-fw fa-wallet"></i><span>Finance</span></a>
     </div>
+    <div class="nav-item <?= $active_page === 'finance_reminders' ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= BASE_URL ?>modules/finance/reminders.php"><i class="fas fa-fw fa-bell"></i><span>Payments &amp; Reminders</span></a>
+    </div>
 
     <div class="sidebar-heading">Wellbeing</div>
     <div class="nav-item <?= $active_page === 'health' ? 'active' : '' ?>">

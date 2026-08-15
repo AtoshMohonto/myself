@@ -25,6 +25,9 @@ $month_expense = fetch_one("SELECT COALESCE(SUM(amount),0) as total FROM finance
 
 $upcoming_work = fetch_all("SELECT * FROM work_schedules WHERE user_id = ? AND status IN ('Upcoming','Ongoing') AND (schedule_date IS NULL OR schedule_date >= ?) ORDER BY (schedule_date IS NULL), schedule_date ASC LIMIT 5", [$uid, $today]);
 
+$upcoming_reminders = fetch_all("SELECT * FROM finance_reminders WHERE user_id = ? AND status = 'Upcoming' ORDER BY due_date ASC LIMIT 5", [$uid]);
+$reminder_overdue = fetch_one("SELECT COALESCE(COUNT(*),0) as cnt, COALESCE(SUM(amount),0) as total FROM finance_reminders WHERE user_id = ? AND status = 'Overdue'", [$uid]);
+
 $low_stock_meds = fetch_all("SELECT * FROM medicines WHERE user_id = ? AND status = 'Active' AND stock_quantity <= 5 ORDER BY stock_quantity ASC LIMIT 5", [$uid]);
 $active_meds_count = fetch_one("SELECT COUNT(*) as cnt FROM medicines WHERE user_id = ? AND status = 'Active'", [$uid])['cnt'] ?? 0;
 
@@ -145,6 +148,27 @@ include __DIR__ . '/templates/sidebar.php';
                     <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                         <div><span class="fw-bold"><?= sanitize($w['title']) ?></span> <span class="badge bg-light text-dark ms-1"><?= $w['work_type'] ?></span></div>
                         <span class="text-muted small"><?= $w['schedule_date'] ? format_date($w['schedule_date']) : 'Recurring' ?></span>
+                    </div>
+                <?php endforeach; endif; ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary"><i class="fas fa-bell me-1"></i> Payments &amp; Reminders</h6>
+                <a href="modules/finance/reminders.php" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <?php if ((int) ($reminder_overdue['cnt'] ?? 0) > 0): ?>
+                    <div class="alert alert-danger py-2 mb-3 small"><i class="fas fa-triangle-exclamation me-1"></i> <?= (int) $reminder_overdue['cnt'] ?> overdue — <?= format_currency($reminder_overdue['total'] ?? 0) ?></div>
+                <?php endif; ?>
+                <?php if (empty($upcoming_reminders)): ?>
+                    <p class="text-muted text-center py-3 mb-0">No upcoming payment reminders.</p>
+                <?php else: foreach ($upcoming_reminders as $r): ?>
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                        <div><span class="fw-bold"><?= sanitize($r['title']) ?></span> <span class="badge bg-<?= $r['type'] === 'Income' ? 'success' : 'danger' ?>"><?= $r['type'] === 'Income' ? 'Receive' : 'Pay' ?></span></div>
+                        <span class="text-muted small"><?= format_date($r['due_date']) ?> · <?= format_currency($r['amount']) ?></span>
                     </div>
                 <?php endforeach; endif; ?>
             </div>
