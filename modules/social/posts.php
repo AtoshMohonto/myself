@@ -56,6 +56,7 @@ if (isset($_GET['edit'])) {
     $editPost = fetch_one("SELECT * FROM social_posts WHERE id = ? AND user_id = ?", [(int) $_GET['edit'], $uid]);
 }
 $posts = fetch_all("SELECT p.*, a.platform, a.handle FROM social_posts p LEFT JOIN social_accounts a ON p.social_account_id = a.id WHERE p.user_id = ? ORDER BY (p.scheduled_date IS NULL), p.scheduled_date ASC", [$uid]);
+$categories = category_options_with_current('social_post_type', $editPost['post_type'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -77,7 +78,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                     <label class="form-label fw-bold">Account</label>
                     <select name="social_account_id" class="form-select">
                         <option value="0">— Unassigned —</option>
-                        <?php foreach ($accounts as $a): ?><option value="<?= $a['id'] ?>" <?= (int) ($editPost['social_account_id'] ?? 0) === (int) $a['id'] ? 'selected' : '' ?>><?= $a['platform'] ?> @<?= sanitize($a['handle']) ?></option><?php endforeach; ?>
+                        <?php foreach ($accounts as $a): ?><option value="<?= $a['id'] ?>" <?= (int) ($editPost['social_account_id'] ?? 0) === (int) $a['id'] ? 'selected' : '' ?>><?= sanitize($a['platform']) ?> @<?= sanitize($a['handle']) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -87,7 +88,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Type</label>
                     <select name="post_type" class="form-select">
-                        <?php foreach (['Post','Reel','Story','Video','Article','Other'] as $t): ?><option value="<?= $t ?>" <?= ($editPost['post_type'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option><?php endforeach; ?>
+                        <?php foreach ($categories as $t): ?><option value="<?= sanitize($t) ?>" <?= ($editPost['post_type'] ?? '') === $t ? 'selected' : '' ?>><?= sanitize($t) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -123,8 +124,8 @@ include __DIR__ . '/../../templates/sidebar.php';
                         <tr>
                             <td><?= $p['scheduled_date'] ? format_date($p['scheduled_date']) : '-' ?></td>
                             <td class="fw-bold"><?= sanitize($p['title']) ?></td>
-                            <td><?= $p['platform'] ? $p['platform'] . ' @' . sanitize($p['handle']) : '<span class="text-muted">Unassigned</span>' ?></td>
-                            <td><span class="badge bg-light text-dark"><?= $p['post_type'] ?></span></td>
+                            <td><?= $p['platform'] ? sanitize($p['platform']) . ' @' . sanitize($p['handle']) : '<span class="text-muted">Unassigned</span>' ?></td>
+                            <td><span class="badge bg-light text-dark"><?= sanitize($p['post_type']) ?></span></td>
                             <td>
                                 <form method="POST" class="d-inline">
                                     <?= csrf_field() ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="id" value="<?= $p['id'] ?>">

@@ -58,6 +58,7 @@ if (isset($_GET['edit'])) {
     $editMed = fetch_one("SELECT * FROM medicines WHERE id = ? AND user_id = ?", [(int) $_GET['edit'], $uid]);
 }
 $medicines = fetch_all("SELECT * FROM medicines WHERE user_id = ? ORDER BY FIELD(status,'Active','Completed','Stopped'), name ASC", [$uid]);
+$categories = category_options_with_current('medicine_form', $editMed['form'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -86,7 +87,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Form</label>
                     <select name="form" class="form-select">
-                        <?php foreach (['Tablet','Capsule','Syrup','Injection','Drops','Ointment','Other'] as $f): ?><option value="<?= $f ?>" <?= ($editMed['form'] ?? '') === $f ? 'selected' : '' ?>><?= $f ?></option><?php endforeach; ?>
+                        <?php foreach ($categories as $f): ?><option value="<?= sanitize($f) ?>" <?= ($editMed['form'] ?? '') === $f ? 'selected' : '' ?>><?= sanitize($f) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-2">

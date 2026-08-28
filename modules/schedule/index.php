@@ -61,6 +61,7 @@ $params = [$uid];
 if ($filter_date !== '') { $sql .= " AND event_date = ?"; $params[] = $filter_date; }
 $sql .= " ORDER BY event_date DESC, start_time ASC";
 $events = fetch_all($sql, $params);
+$categories = category_options_with_current('schedule', $editEvent['category'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -84,8 +85,8 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
                     <select name="category" class="form-select">
-                        <?php foreach (['Personal','Work','Health','Study','Social','Other'] as $c): ?>
-                            <option value="<?= $c ?>" <?= ($editEvent['category'] ?? '') === $c ? 'selected' : '' ?>><?= $c ?></option>
+                        <?php foreach ($categories as $c): ?>
+                            <option value="<?= sanitize($c) ?>" <?= ($editEvent['category'] ?? '') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -149,7 +150,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                             <td><?= format_date($e['event_date']) ?></td>
                             <td class="text-sm"><?= $e['start_time'] ? format_time($e['start_time']) : '-' ?><?= $e['end_time'] ? ' – ' . format_time($e['end_time']) : '' ?></td>
                             <td class="fw-bold"><?= sanitize($e['title']) ?><?= $e['is_recurring'] ? ' <i class="fas fa-repeat text-muted ms-1" title="Recurring: ' . $e['recurrence_type'] . '"></i>' : '' ?></td>
-                            <td><span class="badge bg-light text-dark"><?= $e['category'] ?></span></td>
+                            <td><span class="badge bg-light text-dark"><?= sanitize($e['category']) ?></span></td>
                             <td><span class="badge bg-<?= status_badge_class($e['status']) ?>"><?= $e['status'] ?></span></td>
                             <td class="text-nowrap">
                                 <?php if ($e['status'] !== 'Done'): ?>

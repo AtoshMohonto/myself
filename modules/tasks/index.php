@@ -58,6 +58,7 @@ $params = [$uid];
 if ($filter_status !== '') { $sql .= " AND status = ?"; $params[] = $filter_status; }
 $sql .= " ORDER BY FIELD(status,'In Progress','Pending','Done','Cancelled'), (due_date IS NULL), due_date ASC";
 $tasks = fetch_all($sql, $params);
+$categories = category_options_with_current('tasks', $editTask['category'] ?? 'General');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -80,7 +81,11 @@ include __DIR__ . '/../../templates/sidebar.php';
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
-                    <input type="text" name="category" class="form-control" value="<?= sanitize($editTask['category'] ?? 'General') ?>">
+                    <select name="category" class="form-select">
+                        <?php foreach ($categories as $c): ?>
+                            <option value="<?= sanitize($c) ?>" <?= ($editTask['category'] ?? 'General') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Priority</label>

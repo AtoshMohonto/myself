@@ -42,6 +42,9 @@
     <div class="nav-item <?= $active_page === 'finance_reminders' ? 'active' : '' ?>">
         <a class="nav-link" href="<?= BASE_URL ?>modules/finance/reminders.php"><i class="fas fa-fw fa-bell"></i><span>Payments &amp; Reminders</span></a>
     </div>
+    <div class="nav-item <?= $active_page === 'lend_borrow' ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= BASE_URL ?>modules/lend_borrow/index.php"><i class="fas fa-fw fa-handshake"></i><span>Lend &amp; Borrow</span></a>
+    </div>
 
     <div class="sidebar-heading">Wellbeing</div>
     <div class="nav-item <?= $active_page === 'health' ? 'active' : '' ?>">
@@ -54,6 +57,11 @@
     <div class="sidebar-heading">Online</div>
     <div class="nav-item <?= $active_page === 'social' ? 'active' : '' ?>">
         <a class="nav-link" href="<?= BASE_URL ?>modules/social/index.php"><i class="fas fa-fw fa-hashtag"></i><span>Social Media</span></a>
+    </div>
+
+    <div class="sidebar-heading">Security</div>
+    <div class="nav-item <?= $active_page === 'digital_locker' ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= BASE_URL ?>modules/digital_locker/index.php"><i class="fas fa-fw fa-shield-halved"></i><span>Digital Locker</span></a>
     </div>
 
     <?php if (is_admin()): ?>
@@ -70,6 +78,9 @@
     <div class="nav-item <?= $active_page === 'profile' ? 'active' : '' ?>">
         <a class="nav-link" href="<?= BASE_URL ?>profile.php"><i class="fas fa-fw fa-user-gear"></i><span>Profile</span></a>
     </div>
+    <div class="nav-item <?= $active_page === 'settings' ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= BASE_URL ?>settings.php"><i class="fas fa-fw fa-gear"></i><span>Settings</span></a>
+    </div>
     <div class="nav-item">
         <a class="nav-link" href="<?= BASE_URL ?>modules/auth/logout.php" data-confirm="Log out?"><i class="fas fa-fw fa-right-from-bracket"></i><span>Logout</span></a>
     </div>
@@ -83,7 +94,7 @@
 <div id="content-wrapper" class="d-flex flex-column">
 <div id="content">
 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-0 static-top shadow-sm">
-    <button id="sidebarToggleTop" class="btn btn-link rounded-circle mr-1"><i class="fas fa-bars"></i></button>
+    <button id="sidebarToggleTop" class="btn btn-link rounded-circle me-1"><i class="fas fa-bars"></i></button>
     <span class="fw-bold text-dark d-none d-md-inline ms-2"><?= isset($page_title) ? sanitize($page_title) : 'MySelf' ?></span>
     <ul class="navbar-nav ms-auto">
         <li class="nav-item dropdown no-arrow">

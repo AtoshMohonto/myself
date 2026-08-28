@@ -14,6 +14,10 @@ define('DB_NAME', 'myself_db');
 define('APP_NAME', 'MySelf');
 define('BASE_URL', '/myself/');
 
+// Encryption key for sensitive data (Digital Locker passwords). Keep this secret;
+// changing it will make previously stored locker passwords undecryptable.
+define('ENCRYPTION_KEY', 'f607333c25d69908c5a8d0cf8866d507e4931fa342821cee4aefedd5eeb1da4b');
+
 // Database Connection
 function get_db_connection() {
     static $conn;

@@ -49,6 +49,7 @@ if (isset($_GET['edit'])) {
     $editDream = fetch_one("SELECT * FROM dreams WHERE id = ? AND user_id = ?", [(int) $_GET['edit'], $uid]);
 }
 $dreams = fetch_all("SELECT * FROM dreams WHERE user_id = ? ORDER BY FIELD(status,'Active','Achieved','Faded'), FIELD(timeframe,'Short-term','Long-term','Someday')", [$uid]);
+$categories = category_options_with_current('dreams', $editDream['category'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -71,7 +72,9 @@ include __DIR__ . '/../../templates/sidebar.php';
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Category</label>
-                    <input type="text" name="category" class="form-control" placeholder="Career, Travel, Financial..." value="<?= sanitize($editDream['category'] ?? '') ?>">
+                    <select name="category" class="form-select">
+                        <?php foreach ($categories as $c): ?><option value="<?= sanitize($c) ?>" <?= ($editDream['category'] ?? '') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option><?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Timeframe</label>

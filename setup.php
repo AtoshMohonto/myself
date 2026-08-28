@@ -50,6 +50,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         photo VARCHAR(255) DEFAULT NULL,
         timezone VARCHAR(50) DEFAULT 'Asia/Dhaka',
         currency_symbol VARCHAR(10) NOT NULL DEFAULT '৳',
+        lock_digital_locker TINYINT(1) NOT NULL DEFAULT 0,
         isDelete TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )",
@@ -75,7 +76,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         user_id INT NOT NULL,
         title VARCHAR(200) NOT NULL,
         description TEXT,
-        category ENUM('Personal','Work','Health','Study','Social','Other') DEFAULT 'Personal',
+        category VARCHAR(50) DEFAULT 'Personal',
         event_date DATE NOT NULL,
         start_time TIME DEFAULT NULL,
         end_time TIME DEFAULT NULL,
@@ -103,7 +104,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         user_id INT NOT NULL,
         title VARCHAR(200) NOT NULL,
         description TEXT,
-        category ENUM('Career','Financial','Health','Education','Personal','Relationship','Spiritual','Other') DEFAULT 'Personal',
+        category VARCHAR(50) DEFAULT 'Personal',
         target_date DATE DEFAULT NULL,
         progress TINYINT DEFAULT 0,
         status ENUM('Active','Achieved','Abandoned') DEFAULT 'Active',
@@ -153,7 +154,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
     "work_schedules (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        work_type ENUM('Official Job','Remote Job','Passive Income','Tuition','Student Consultation','Freelance','Other') DEFAULT 'Official Job',
+        work_type VARCHAR(50) DEFAULT 'Official Job',
         title VARCHAR(200) NOT NULL,
         organization VARCHAR(150) DEFAULT NULL,
         schedule_date DATE DEFAULT NULL,
@@ -170,7 +171,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         name VARCHAR(100) NOT NULL,
-        type ENUM('Bank','Cash','Mobile Wallet','Savings','Investment','Other') DEFAULT 'Cash',
+        type VARCHAR(50) DEFAULT 'Cash',
         opening_balance DECIMAL(15,2) DEFAULT 0,
         balance DECIMAL(15,2) DEFAULT 0,
         notes TEXT,
@@ -192,7 +193,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
     "health_records (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        record_type ENUM('Checkup','Condition','Allergy','Vaccination','Lab Result','Vital','Other') DEFAULT 'Checkup',
+        record_type VARCHAR(50) DEFAULT 'Checkup',
         title VARCHAR(200) NOT NULL,
         description TEXT,
         record_date DATE NOT NULL,
@@ -206,7 +207,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         user_id INT NOT NULL,
         name VARCHAR(150) NOT NULL,
         dosage VARCHAR(80) DEFAULT NULL,
-        form ENUM('Tablet','Capsule','Syrup','Injection','Drops','Ointment','Other') DEFAULT 'Tablet',
+        form VARCHAR(50) DEFAULT 'Tablet',
         stock_quantity INT DEFAULT 0,
         unit VARCHAR(30) DEFAULT 'pcs',
         frequency VARCHAR(100) DEFAULT NULL,
@@ -222,7 +223,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
     "social_accounts (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        platform ENUM('Facebook','Instagram','YouTube','LinkedIn','X (Twitter)','TikTok','Blog','Other') DEFAULT 'Facebook',
+        platform VARCHAR(50) DEFAULT 'Facebook',
         handle VARCHAR(100) DEFAULT NULL,
         profile_url VARCHAR(255) DEFAULT NULL,
         followers_count INT DEFAULT 0,
@@ -236,7 +237,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         social_account_id INT DEFAULT NULL,
         title VARCHAR(200) NOT NULL,
         content TEXT,
-        post_type ENUM('Post','Reel','Story','Video','Article','Other') DEFAULT 'Post',
+        post_type VARCHAR(50) DEFAULT 'Post',
         scheduled_date DATE DEFAULT NULL,
         status ENUM('Planned','Scheduled','Posted','Cancelled') DEFAULT 'Planned',
         notes TEXT,
@@ -252,6 +253,45 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         amount DECIMAL(15,2) NOT NULL DEFAULT 0,
         due_date DATE NOT NULL,
         status ENUM('Upcoming','Paid','Overdue') DEFAULT 'Upcoming',
+        notes TEXT,
+        isDelete TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )",
+    "digital_locker (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        category VARCHAR(50) DEFAULT 'Other',
+        title VARCHAR(150) NOT NULL,
+        username VARCHAR(150) DEFAULT NULL,
+        password TEXT NOT NULL,
+        url VARCHAR(255) DEFAULT NULL,
+        notes TEXT,
+        isDelete TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )",
+    "categories (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        module VARCHAR(40) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        sort_order INT DEFAULT 0,
+        isDelete TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )",
+    "lend_borrow (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        direction ENUM('Lent','Borrowed') NOT NULL DEFAULT 'Lent',
+        item_type ENUM('Money','Item') NOT NULL DEFAULT 'Money',
+        person_name VARCHAR(150) NOT NULL,
+        person_contact VARCHAR(100) DEFAULT NULL,
+        description VARCHAR(255) NOT NULL,
+        amount DECIMAL(15,2) DEFAULT NULL,
+        is_returnable TINYINT(1) NOT NULL DEFAULT 1,
+        date_given DATE NOT NULL,
+        due_date DATE DEFAULT NULL,
+        returned_date DATE DEFAULT NULL,
+        status ENUM('Pending','Returned','Overdue','Written Off') NOT NULL DEFAULT 'Pending',
         notes TEXT,
         isDelete TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -276,6 +316,28 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         $conn->query("ALTER TABLE work_schedules ADD COLUMN custom_days VARCHAR(20) DEFAULT NULL AFTER recurrence_type");
         echo '<div class="small text-success">✓ work_schedules.custom_days added (Custom repeat days)</div>';
     }
+
+    // Users: Digital Locker re-auth preference
+    $colRes2 = $conn->query("SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'lock_digital_locker'");
+    $colRow2 = $colRes2->fetch_assoc();
+    if ((int) ($colRow2['c'] ?? 0) === 0) {
+        $conn->query("ALTER TABLE users ADD COLUMN lock_digital_locker TINYINT(1) NOT NULL DEFAULT 0 AFTER currency_symbol");
+        echo '<div class="small text-success">✓ users.lock_digital_locker added (Digital Locker re-auth)</div>';
+    }
+
+    // Categories: user-manageable category/type lists (Settings > Categories).
+    // Convert the columns that used to be fixed ENUMs to plain VARCHAR so any
+    // custom category name can be stored. Existing values are preserved as-is.
+    $conn->query("ALTER TABLE schedule_events MODIFY COLUMN category VARCHAR(50) DEFAULT 'Personal'");
+    $conn->query("ALTER TABLE goals MODIFY COLUMN category VARCHAR(50) DEFAULT 'Personal'");
+    $conn->query("ALTER TABLE work_schedules MODIFY COLUMN work_type VARCHAR(50) DEFAULT 'Official Job'");
+    $conn->query("ALTER TABLE health_records MODIFY COLUMN record_type VARCHAR(50) DEFAULT 'Checkup'");
+    $conn->query("ALTER TABLE medicines MODIFY COLUMN form VARCHAR(50) DEFAULT 'Tablet'");
+    $conn->query("ALTER TABLE social_accounts MODIFY COLUMN platform VARCHAR(50) DEFAULT 'Facebook'");
+    $conn->query("ALTER TABLE social_posts MODIFY COLUMN post_type VARCHAR(50) DEFAULT 'Post'");
+    $conn->query("ALTER TABLE finance_accounts MODIFY COLUMN type VARCHAR(50) DEFAULT 'Cash'");
+    $conn->query("ALTER TABLE digital_locker MODIFY COLUMN category VARCHAR(50) DEFAULT 'Other'");
+    echo '<div class="small text-success">✓ category columns converted to editable lists</div>';
 
     // Seed owner account — first user is always an active Admin
     $ownerCheck = $conn->query("SELECT id FROM users LIMIT 1");

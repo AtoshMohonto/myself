@@ -1,18 +1,29 @@
-function isMobile() { return window.innerWidth < 768; }
+// Keep this in sync with the CSS off-canvas breakpoint (max-width: 991.98px in style.css).
+function isMobile() { return window.innerWidth < 992; }
+
+function setToggleIcon(collapsedOrClosed) {
+    document.querySelectorAll('#sidebarToggleTop i, #sidebarToggle i').forEach(function (icon) {
+        icon.className = collapsedOrClosed ? 'fas fa-bars' : 'fas fa-angle-left';
+    });
+}
 
 function openSidebar() {
     document.body.classList.remove('sidebar-hidden');
     document.body.classList.add('sidebar-open');
+    setToggleIcon(false);
 }
 function closeSidebar() {
     document.body.classList.add('sidebar-hidden');
     document.body.classList.remove('sidebar-open');
+    setToggleIcon(true);
 }
 function toggleSidebar() {
     if (isMobile()) {
         if (document.body.classList.contains('sidebar-hidden')) { openSidebar(); } else { closeSidebar(); }
     } else {
-        document.body.classList.toggle('sidebar-hidden');
+        var hidden = document.body.classList.toggle('sidebar-hidden');
+        setToggleIcon(hidden);
+        try { localStorage.setItem('sidebarCollapsed', hidden ? '1' : '0'); } catch (e) {}
     }
 }
 
@@ -36,13 +47,22 @@ document.addEventListener('DOMContentLoaded', function () {
     var overlay = document.getElementById('sidebarOverlay');
     if (overlay) overlay.addEventListener('click', closeSidebar);
 
-    if (isMobile()) closeSidebar();
+    if (isMobile()) {
+        closeSidebar();
+    } else {
+        setToggleIcon(document.body.classList.contains('sidebar-hidden'));
+    }
 });
 
 window.addEventListener('resize', function () {
     if (!isMobile()) {
+        // Leaving mobile width: drop the mobile "open" state so the overlay's
+        // CSS rule (body.sidebar-open .sidebar-overlay) turns it off on its own.
+        // (Do not set overlay.style.display directly — an inline style would
+        // permanently win over that CSS rule and the overlay would never show again.)
         document.body.classList.remove('sidebar-open');
-        var overlay = document.getElementById('sidebarOverlay');
-        if (overlay) overlay.style.display = 'none';
+        setToggleIcon(document.body.classList.contains('sidebar-hidden'));
+    } else {
+        setToggleIcon(!document.body.classList.contains('sidebar-open'));
     }
 });

@@ -45,6 +45,7 @@ if (isset($_GET['edit'])) {
 }
 $accounts = fetch_all("SELECT * FROM social_accounts WHERE user_id = ? ORDER BY platform ASC", [$uid]);
 $total_followers = array_sum(array_column($accounts, 'followers_count'));
+$categories = category_options_with_current('social_platform', $editAcc['platform'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -72,7 +73,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Platform</label>
                     <select name="platform" class="form-select">
-                        <?php foreach (['Facebook','Instagram','YouTube','LinkedIn','X (Twitter)','TikTok','Blog','Other'] as $p): ?><option value="<?= $p ?>" <?= ($editAcc['platform'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option><?php endforeach; ?>
+                        <?php foreach ($categories as $p): ?><option value="<?= sanitize($p) ?>" <?= ($editAcc['platform'] ?? '') === $p ? 'selected' : '' ?>><?= sanitize($p) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -110,7 +111,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                         <tr><td colspan="5" class="text-center text-muted py-3">No social accounts yet.</td></tr>
                     <?php else: foreach ($accounts as $a): ?>
                         <tr>
-                            <td><span class="badge bg-light text-dark"><?= $a['platform'] ?></span></td>
+                            <td><span class="badge bg-light text-dark"><?= sanitize($a['platform']) ?></span></td>
                             <td class="fw-bold">@<?= sanitize($a['handle']) ?></td>
                             <td><?= number_format($a['followers_count']) ?></td>
                             <td><?php if ($a['profile_url']): ?><a href="<?= sanitize($a['profile_url']) ?>" target="_blank" rel="noopener">Visit <i class="fas fa-arrow-up-right-from-square fa-xs"></i></a><?php else: ?>-<?php endif; ?></td>

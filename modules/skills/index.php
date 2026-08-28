@@ -51,6 +51,7 @@ $params = [$uid];
 if ($filter_type !== '') { $sql .= " AND type = ?"; $params[] = $filter_type; }
 $sql .= " ORDER BY type, name ASC";
 $skills = fetch_all($sql, $params);
+$categories = category_options_with_current('skills', $editSkill['category'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -79,7 +80,9 @@ include __DIR__ . '/../../templates/sidebar.php';
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
-                    <input type="text" name="category" class="form-control" placeholder="Programming, Communication..." value="<?= sanitize($editSkill['category'] ?? '') ?>">
+                    <select name="category" class="form-select">
+                        <?php foreach ($categories as $c): ?><option value="<?= sanitize($c) ?>" <?= ($editSkill['category'] ?? '') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option><?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Proficiency</label>

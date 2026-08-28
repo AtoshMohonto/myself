@@ -52,7 +52,7 @@ if (isset($_GET['edit'])) {
     $editGoal = fetch_one("SELECT * FROM goals WHERE id = ? AND user_id = ?", [(int) $_GET['edit'], $uid]);
 }
 $goals = fetch_all("SELECT * FROM goals WHERE user_id = ? ORDER BY FIELD(status,'Active','Achieved','Abandoned'), (target_date IS NULL), target_date ASC", [$uid]);
-$categories = ['Career','Financial','Health','Education','Personal','Relationship','Spiritual','Other'];
+$categories = category_options_with_current('goals', $editGoal['category'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -76,7 +76,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
                     <select name="category" class="form-select">
-                        <?php foreach ($categories as $c): ?><option value="<?= $c ?>" <?= ($editGoal['category'] ?? '') === $c ? 'selected' : '' ?>><?= $c ?></option><?php endforeach; ?>
+                        <?php foreach ($categories as $c): ?><option value="<?= sanitize($c) ?>" <?= ($editGoal['category'] ?? '') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -112,7 +112,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <h6 class="fw-bold mb-1"><?= sanitize($g['title']) ?></h6>
-                            <span class="badge bg-light text-dark"><?= $g['category'] ?></span>
+                            <span class="badge bg-light text-dark"><?= sanitize($g['category']) ?></span>
                             <span class="badge bg-<?= status_badge_class($g['status']) ?>"><?= $g['status'] ?></span>
                             <span class="badge bg-<?= $g['priority'] === 'High' ? 'danger' : ($g['priority'] === 'Medium' ? 'warning' : 'secondary') ?>"><?= $g['priority'] ?></span>
                         </div>

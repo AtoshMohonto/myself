@@ -55,6 +55,7 @@ if ($filter_account) { $sql .= " AND t.account_id = ?"; $params[] = $filter_acco
 if ($filter_type) { $sql .= " AND t.type = ?"; $params[] = $filter_type; }
 $sql .= " ORDER BY t.transaction_date DESC, t.id DESC LIMIT 200";
 $transactions = fetch_all($sql, $params);
+$categories = get_categories('finance_category');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -62,10 +63,23 @@ include __DIR__ . '/../../templates/sidebar.php';
 
 <div class="page-header">
     <h1><i class="fas fa-exchange-alt text-primary me-2"></i>Transactions</h1>
-    <a href="index.php" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Accounts</a>
+    <div class="d-flex gap-2">
+        <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary d-print-none"><i class="fas fa-print me-1"></i> Print</button>
+        <a href="index.php" class="btn btn-sm btn-outline-secondary d-print-none"><i class="fas fa-arrow-left me-1"></i> Accounts</a>
+    </div>
 </div>
 
-<div class="card shadow-sm mb-4">
+<div class="d-none d-print-block mb-4">
+    <div class="d-flex justify-content-between align-items-end border-bottom pb-2 mb-3">
+        <div>
+            <h3 class="fw-bold mb-0"><?= sanitize(APP_NAME) ?> — Transaction History</h3>
+            <div class="text-muted small"><?= sanitize(current_user()['full_name'] ?? '') ?></div>
+        </div>
+        <div class="text-muted small">Generated: <?= date('d M Y, h:i A') ?></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4 d-print-none">
     <div class="card-header py-3"><h6 class="m-0 fw-bold">Record Transaction</h6></div>
     <div class="card-body">
         <?php if (empty($accounts)): ?>
@@ -89,7 +103,9 @@ include __DIR__ . '/../../templates/sidebar.php';
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
-                    <input type="text" name="category" class="form-control" placeholder="Salary, Food, Tuition..." value="General">
+                    <select name="category" class="form-select">
+                        <?php foreach ($categories as $c): ?><option value="<?= sanitize($c) ?>"><?= sanitize($c) ?></option><?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Amount *</label>
@@ -115,7 +131,7 @@ include __DIR__ . '/../../templates/sidebar.php';
 <div class="card shadow-sm">
     <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h6 class="m-0 fw-bold">Transaction History</h6>
-        <form method="GET" class="d-flex gap-2">
+        <form method="GET" class="d-flex gap-2 d-print-none">
             <select name="account_id" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="0">All Accounts</option>
                 <?php foreach ($accounts as $a): ?><option value="<?= $a['id'] ?>" <?= $filter_account === (int) $a['id'] ? 'selected' : '' ?>><?= sanitize($a['name']) ?></option><?php endforeach; ?>
@@ -130,7 +146,7 @@ include __DIR__ . '/../../templates/sidebar.php';
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
-                <thead><tr><th>Date</th><th>Account</th><th>Type</th><th>Category</th><th>Description</th><th class="text-end">Amount</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Date</th><th>Account</th><th>Type</th><th>Category</th><th>Description</th><th class="text-end">Amount</th><th class="d-print-none">Actions</th></tr></thead>
                 <tbody>
                     <?php if (empty($transactions)): ?>
                         <tr><td colspan="7" class="text-center text-muted py-3">No transactions yet.</td></tr>
@@ -142,7 +158,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                             <td><span class="badge bg-light text-dark"><?= sanitize($t['category']) ?></span></td>
                             <td class="text-sm"><?= sanitize($t['description']) ?></td>
                             <td class="text-end fw-bold <?= $t['type'] === 'Income' ? 'text-success' : 'text-danger' ?>"><?= $t['type'] === 'Income' ? '+' : '-' ?><?= format_currency($t['amount']) ?></td>
-                            <td><form method="POST" onsubmit="return confirm('Delete this transaction? This will reverse the account balance.');"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= $t['id'] ?>"><button class="btn btn-xs btn-outline-danger"><i class="fas fa-trash"></i></button></form></td>
+                            <td class="d-print-none"><form method="POST" onsubmit="return confirm('Delete this transaction? This will reverse the account balance.');"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= $t['id'] ?>"><button class="btn btn-xs btn-outline-danger"><i class="fas fa-trash"></i></button></form></td>
                         </tr>
                     <?php endforeach; endif; ?>
                 </tbody>

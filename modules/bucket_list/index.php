@@ -55,6 +55,7 @@ if (isset($_GET['edit'])) {
 $items = fetch_all("SELECT * FROM bucket_list WHERE user_id = ? ORDER BY FIELD(status,'In Progress','Not Started','Done')", [$uid]);
 $total = count($items);
 $done = count(array_filter($items, fn($i) => $i['status'] === 'Done'));
+$categories = category_options_with_current('bucket_list', $editItem['category'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -78,7 +79,9 @@ include __DIR__ . '/../../templates/sidebar.php';
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
-                    <input type="text" name="category" class="form-control" placeholder="Travel, Adventure..." value="<?= sanitize($editItem['category'] ?? '') ?>">
+                    <select name="category" class="form-select">
+                        <?php foreach ($categories as $c): ?><option value="<?= sanitize($c) ?>" <?= ($editItem['category'] ?? '') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option><?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Priority</label>

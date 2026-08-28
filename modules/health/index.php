@@ -45,6 +45,7 @@ if (isset($_GET['edit'])) {
     $editRecord = fetch_one("SELECT * FROM health_records WHERE id = ? AND user_id = ?", [(int) $_GET['edit'], $uid]);
 }
 $records = fetch_all("SELECT * FROM health_records WHERE user_id = ? ORDER BY record_date DESC", [$uid]);
+$categories = category_options_with_current('health_type', $editRecord['record_type'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -65,7 +66,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Type</label>
                     <select name="record_type" class="form-select">
-                        <?php foreach (['Checkup','Condition','Allergy','Vaccination','Lab Result','Vital','Other'] as $t): ?><option value="<?= $t ?>" <?= ($editRecord['record_type'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option><?php endforeach; ?>
+                        <?php foreach ($categories as $t): ?><option value="<?= sanitize($t) ?>" <?= ($editRecord['record_type'] ?? '') === $t ? 'selected' : '' ?>><?= sanitize($t) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -108,7 +109,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                     <?php else: foreach ($records as $r): ?>
                         <tr>
                             <td><?= format_date($r['record_date']) ?></td>
-                            <td><span class="badge bg-light text-dark"><?= $r['record_type'] ?></span></td>
+                            <td><span class="badge bg-light text-dark"><?= sanitize($r['record_type']) ?></span></td>
                             <td class="fw-bold"><?= sanitize($r['title']) ?></td>
                             <td><?= sanitize($r['doctor_name'] ?? '-') ?></td>
                             <td class="text-nowrap">

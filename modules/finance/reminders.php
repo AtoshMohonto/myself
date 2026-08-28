@@ -5,8 +5,6 @@ $page_title = 'Payments & Reminders';
 $active_page = 'finance';
 $uid = my_id();
 
-$reminder_categories = ['Salary','Tuition','Lend Given','Lend Received','Rent','Utility','Insurance','Other'];
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf($_POST['csrf_token'] ?? '')) {
         redirect('modules/finance/reminders.php', 'Invalid request.', 'danger');
@@ -92,6 +90,7 @@ $totals = fetch_one("SELECT
     FROM finance_reminders WHERE user_id = ?", [$uid]);
 
 $accounts = fetch_all("SELECT * FROM finance_accounts WHERE user_id = ? ORDER BY name ASC", [$uid]);
+$reminder_categories = category_options_with_current('finance_category', $editReminder['category'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -99,7 +98,20 @@ include __DIR__ . '/../../templates/sidebar.php';
 
 <div class="page-header">
     <h1><i class="fas fa-bell text-primary me-2"></i>Payments &amp; Reminders</h1>
-    <a href="transactions.php" class="btn btn-sm btn-outline-secondary"><i class="fas fa-exchange-alt me-1"></i> Transactions</a>
+    <div class="d-flex gap-2">
+        <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary d-print-none"><i class="fas fa-print me-1"></i> Print</button>
+        <a href="transactions.php" class="btn btn-sm btn-outline-secondary d-print-none"><i class="fas fa-exchange-alt me-1"></i> Transactions</a>
+    </div>
+</div>
+
+<div class="d-none d-print-block mb-4">
+    <div class="d-flex justify-content-between align-items-end border-bottom pb-2 mb-3">
+        <div>
+            <h3 class="fw-bold mb-0"><?= sanitize(APP_NAME) ?> — Payments &amp; Reminders Statement</h3>
+            <div class="text-muted small"><?= sanitize(current_user()['full_name'] ?? '') ?></div>
+        </div>
+        <div class="text-muted small">Generated: <?= date('d M Y, h:i A') ?></div>
+    </div>
 </div>
 
 <div class="row mb-4">
@@ -133,7 +145,7 @@ include __DIR__ . '/../../templates/sidebar.php';
     </div>
 </div>
 
-<div class="card shadow-sm mb-4">
+<div class="card shadow-sm mb-4 d-print-none">
     <div class="card-header py-3"><h6 class="m-0 fw-bold"><?= $editReminder ? 'Edit Reminder' : 'Add Reminder' ?></h6></div>
     <div class="card-body">
         <form method="POST">
@@ -154,7 +166,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Category</label>
                     <select name="category" class="form-select">
-                        <?php foreach ($reminder_categories as $c): ?><option value="<?= $c ?>" <?= ($editReminder['category'] ?? '') === $c ? 'selected' : '' ?>><?= $c ?></option><?php endforeach; ?>
+                        <?php foreach ($reminder_categories as $c): ?><option value="<?= sanitize($c) ?>" <?= ($editReminder['category'] ?? '') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -181,7 +193,7 @@ include __DIR__ . '/../../templates/sidebar.php';
 <div class="card shadow-sm">
     <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h6 class="m-0 fw-bold">Reminders</h6>
-        <div class="btn-group btn-group-sm">
+        <div class="btn-group btn-group-sm d-print-none">
             <a href="?status=" class="btn btn-outline-secondary <?= $filter_status === '' ? 'active' : '' ?>">All</a>
             <a href="?status=Overdue" class="btn btn-outline-danger <?= $filter_status === 'Overdue' ? 'active' : '' ?>">Overdue</a>
             <a href="?status=Upcoming" class="btn btn-outline-primary <?= $filter_status === 'Upcoming' ? 'active' : '' ?>">Upcoming</a>
@@ -191,7 +203,7 @@ include __DIR__ . '/../../templates/sidebar.php';
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
-                <thead><tr><th>Due Date</th><th>Title</th><th>Type</th><th>Category</th><th class="text-end">Amount</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Due Date</th><th>Title</th><th>Type</th><th>Category</th><th class="text-end">Amount</th><th>Status</th><th class="d-print-none">Actions</th></tr></thead>
                 <tbody>
                     <?php if (empty($reminders)): ?>
                         <tr><td colspan="7" class="text-center text-muted py-3">No reminders yet.</td></tr>
@@ -203,7 +215,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                             <td><span class="badge bg-light text-dark"><?= sanitize($r['category']) ?></span></td>
                             <td class="text-end fw-bold <?= $r['type'] === 'Income' ? 'text-success' : 'text-danger' ?>"><?= $r['type'] === 'Income' ? '+' : '-' ?><?= format_currency($r['amount']) ?></td>
                             <td><span class="badge bg-<?= status_badge_class($r['status']) ?>"><?= $r['status'] ?></span></td>
-                            <td class="text-nowrap">
+                            <td class="text-nowrap d-print-none">
                                 <?php if ($r['status'] !== 'Paid'): ?>
                                 <form method="POST" class="d-inline-flex align-items-center gap-1">
                                     <?= csrf_field() ?>

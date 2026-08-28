@@ -5,7 +5,6 @@ $page_title = 'Work Schedules';
 $active_page = 'work';
 $uid = my_id();
 
-$work_types = ['Official Job','Remote Job','Passive Income','Tuition','Student Consultation','Freelance','Other'];
 $weekday_names = [0 => 'Sun', 1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat'];
 
 function format_custom_days($custom_days) {
@@ -84,6 +83,8 @@ $params = [$uid];
 if ($filter_type !== '') { $sql .= " AND work_type = ?"; $params[] = $filter_type; }
 $sql .= " ORDER BY (schedule_date IS NULL), schedule_date DESC, start_time ASC";
 $works = fetch_all($sql, $params);
+$work_types = get_categories('work_type');
+$form_work_types = category_options_with_current('work_type', $editWork['work_type'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -103,7 +104,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Work Type</label>
                     <select name="work_type" class="form-select">
-                        <?php foreach ($work_types as $t): ?><option value="<?= $t ?>" <?= ($editWork['work_type'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option><?php endforeach; ?>
+                        <?php foreach ($form_work_types as $t): ?><option value="<?= sanitize($t) ?>" <?= ($editWork['work_type'] ?? '') === $t ? 'selected' : '' ?>><?= sanitize($t) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -170,7 +171,7 @@ include __DIR__ . '/../../templates/sidebar.php';
         <div class="btn-group btn-group-sm flex-wrap">
             <a href="?type=" class="btn btn-outline-secondary <?= $filter_type === '' ? 'active' : '' ?>">All</a>
             <?php foreach ($work_types as $t): ?>
-                <a href="?type=<?= urlencode($t) ?>" class="btn btn-outline-secondary <?= $filter_type === $t ? 'active' : '' ?>"><?= $t ?></a>
+                <a href="?type=<?= urlencode($t) ?>" class="btn btn-outline-secondary <?= $filter_type === $t ? 'active' : '' ?>"><?= sanitize($t) ?></a>
             <?php endforeach; ?>
         </div>
     </div>
@@ -184,7 +185,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                     <?php else: foreach ($works as $w): ?>
                         <tr>
                             <td class="fw-bold"><?= sanitize($w['title']) ?><?php if ($w['is_recurring']): ?><i class="fas fa-repeat text-muted ms-1" title="<?= $w['recurrence_type'] ?><?= $w['recurrence_type'] === 'Custom' && $w['custom_days'] ? ': ' . format_custom_days($w['custom_days']) : '' ?>"></i><?php endif; ?></td>
-                            <td><span class="badge bg-light text-dark"><?= $w['work_type'] ?></span></td>
+                            <td><span class="badge bg-light text-dark"><?= sanitize($w['work_type']) ?></span></td>
                             <td><?= sanitize($w['organization'] ?? '-') ?></td>
                             <td>
                                 <?php if ($w['recurrence_type'] === 'Custom' && $w['custom_days']): ?>

@@ -57,7 +57,11 @@ body {
 .sidebar .nav-item .nav-link:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .sidebar .nav-item.active .nav-link { background: rgba(99,102,241,0.18); color: #fff; border-left-color: var(--primary); font-weight: 600; }
 
-body.sidebar-hidden .sidebar { margin-left: -15rem; width: 0; }
+/* Desktop collapse: the sidebar is position:sticky and part of the flex row here,
+   so only shrink its width. (A negative margin-left on top of width:0 would double
+   up in flex layout math and shove the topbar off-screen to the left.) The mobile
+   off-canvas slide below uses its own unconditional margin-left, independent of this. */
+body.sidebar-hidden .sidebar { width: 0; overflow: hidden; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1020; }
 body.sidebar-open .sidebar-overlay { display: block; }
 

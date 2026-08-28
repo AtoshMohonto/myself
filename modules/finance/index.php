@@ -49,6 +49,7 @@ $total_balance = array_sum(array_column($accounts, 'balance'));
 
 $month_income = fetch_one("SELECT COALESCE(SUM(amount),0) as total FROM finance_transactions WHERE user_id = ? AND type='Income' AND transaction_date >= DATE_FORMAT(CURDATE(),'%Y-%m-01')", [$uid])['total'] ?? 0;
 $month_expense = fetch_one("SELECT COALESCE(SUM(amount),0) as total FROM finance_transactions WHERE user_id = ? AND type='Expense' AND transaction_date >= DATE_FORMAT(CURDATE(),'%Y-%m-01')", [$uid])['total'] ?? 0;
+$account_types = category_options_with_current('finance_account_type', $editAccount['type'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -94,7 +95,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Type</label>
                     <select name="type" class="form-select">
-                        <?php foreach (['Bank','Cash','Mobile Wallet','Savings','Investment','Other'] as $t): ?><option value="<?= $t ?>" <?= ($editAccount['type'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option><?php endforeach; ?>
+                        <?php foreach ($account_types as $t): ?><option value="<?= sanitize($t) ?>" <?= ($editAccount['type'] ?? '') === $t ? 'selected' : '' ?>><?= sanitize($t) ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -126,7 +127,7 @@ include __DIR__ . '/../../templates/sidebar.php';
                     <?php else: foreach ($accounts as $a): ?>
                         <tr>
                             <td class="fw-bold"><?= sanitize($a['name']) ?></td>
-                            <td><span class="badge bg-light text-dark"><?= $a['type'] ?></span></td>
+                            <td><span class="badge bg-light text-dark"><?= sanitize($a['type']) ?></span></td>
                             <td class="text-end fw-bold <?= $a['balance'] >= 0 ? 'text-success' : 'text-danger' ?>"><?= format_currency($a['balance']) ?></td>
                             <td class="text-nowrap">
                                 <a href="?edit=<?= $a['id'] ?>" class="btn btn-xs btn-outline-primary"><i class="fas fa-pen"></i></a>
