@@ -262,6 +262,7 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         user_id INT NOT NULL,
         category VARCHAR(50) DEFAULT 'Other',
         title VARCHAR(150) NOT NULL,
+        role VARCHAR(50) DEFAULT NULL,
         username VARCHAR(150) DEFAULT NULL,
         password TEXT NOT NULL,
         url VARCHAR(255) DEFAULT NULL,
@@ -274,6 +275,29 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
         user_id INT NOT NULL,
         module VARCHAR(40) NOT NULL,
         name VARCHAR(100) NOT NULL,
+        sort_order INT DEFAULT 0,
+        isDelete TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )",
+    "notes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(150) DEFAULT NULL,
+        content TEXT NOT NULL,
+        category VARCHAR(50) DEFAULT 'General',
+        color VARCHAR(20) DEFAULT 'default',
+        is_pinned TINYINT(1) DEFAULT 0,
+        isDelete TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )",
+    "todo_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        content VARCHAR(255) NOT NULL,
+        due_date DATE DEFAULT NULL,
+        is_done TINYINT(1) DEFAULT 0,
+        completed_at DATETIME DEFAULT NULL,
         sort_order INT DEFAULT 0,
         isDelete TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -338,6 +362,14 @@ $pinOk = isset($_GET['pin']) && $_GET['pin'] === SETUP_PIN;
     $conn->query("ALTER TABLE finance_accounts MODIFY COLUMN type VARCHAR(50) DEFAULT 'Cash'");
     $conn->query("ALTER TABLE digital_locker MODIFY COLUMN category VARCHAR(50) DEFAULT 'Other'");
     echo '<div class="small text-success">✓ category columns converted to editable lists</div>';
+
+    // Digital Locker: role field (e.g. Owner, Admin, Viewer)
+    $colRes3 = $conn->query("SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'digital_locker' AND COLUMN_NAME = 'role'");
+    $colRow3 = $colRes3->fetch_assoc();
+    if ((int) ($colRow3['c'] ?? 0) === 0) {
+        $conn->query("ALTER TABLE digital_locker ADD COLUMN role VARCHAR(50) DEFAULT NULL AFTER title");
+        echo '<div class="small text-success">✓ digital_locker.role added (Role dropdown)</div>';
+    }
 
     // Seed owner account — first user is always an active Admin
     $ownerCheck = $conn->query("SELECT id FROM users LIMIT 1");

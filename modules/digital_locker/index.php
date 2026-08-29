@@ -68,6 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id = (int) ($_POST['id'] ?? 0);
     $category = in_array($_POST['category'] ?? '', $categories, true) ? $_POST['category'] : 'Other';
+    $roles = get_categories('digital_locker_role');
+    $role = in_array($_POST['role'] ?? '', $roles, true) ? $_POST['role'] : null;
     $title = sanitize($_POST['title'] ?? '');
     $username = sanitize($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -81,12 +83,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $encryptedPassword = encrypt_data($password);
 
     if ($id > 0) {
-        db_query("UPDATE digital_locker SET category=?, title=?, username=?, password=?, url=?, notes=? WHERE id=? AND user_id=?",
-            [$category, $title, $username, $encryptedPassword, $url, $notes, $id, $uid]);
+        db_query("UPDATE digital_locker SET category=?, title=?, role=?, username=?, password=?, url=?, notes=? WHERE id=? AND user_id=?",
+            [$category, $title, $role, $username, $encryptedPassword, $url, $notes, $id, $uid]);
         redirect('modules/digital_locker/index.php', 'Entry updated.', 'success');
     } else {
-        db_query("INSERT INTO digital_locker (user_id, category, title, username, password, url, notes) VALUES (?,?,?,?,?,?,?)",
-            [$uid, $category, $title, $username, $encryptedPassword, $url, $notes]);
+        db_query("INSERT INTO digital_locker (user_id, category, title, role, username, password, url, notes) VALUES (?,?,?,?,?,?,?,?)",
+            [$uid, $category, $title, $role, $username, $encryptedPassword, $url, $notes]);
         log_activity('Added digital locker entry: ' . $title);
         redirect('modules/digital_locker/index.php', 'Entry added.', 'success');
     }
@@ -108,6 +110,7 @@ if ($filter_category !== '') { $sql .= " AND category = ?"; $params[] = $filter_
 $sql .= " ORDER BY category ASC, title ASC";
 $entries = fetch_all($sql, $params);
 $formCategories = category_options_with_current('digital_locker_category', $editEntry['category'] ?? '');
+$formRoles = category_options_with_current('digital_locker_role', $editEntry['role'] ?? '');
 
 include __DIR__ . '/../../templates/header.php';
 include __DIR__ . '/../../templates/sidebar.php';
@@ -133,11 +136,18 @@ include __DIR__ . '/../../templates/sidebar.php';
                         <?php foreach ($formCategories as $c): ?><option value="<?= sanitize($c) ?>" <?= ($editEntry['category'] ?? 'Other') === $c ? 'selected' : '' ?>><?= sanitize($c) ?></option><?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label fw-bold">Title *</label>
                     <input type="text" name="title" class="form-control" placeholder="e.g. Facebook, Gmail, Home WiFi, Chase Bank" value="<?= sanitize($editEntry['title'] ?? '') ?>" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Role</label>
+                    <select name="role" class="form-select">
+                        <option value="">-</option>
+                        <?php foreach ($formRoles as $r): ?><option value="<?= sanitize($r) ?>" <?= ($editEntry['role'] ?? '') === $r ? 'selected' : '' ?>><?= sanitize($r) ?></option><?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label fw-bold">Username / Email</label>
                     <input type="text" name="username" class="form-control" autocomplete="off" value="<?= sanitize($editEntry['username'] ?? '') ?>">
                 </div>
@@ -179,16 +189,17 @@ include __DIR__ . '/../../templates/sidebar.php';
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead><tr><th>Title</th><th>Category</th><th>Username</th><th>Password</th><th>Website</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Title</th><th>Category</th><th>Role</th><th>Username</th><th>Password</th><th>Website</th><th>Actions</th></tr></thead>
                 <tbody>
                     <?php if (empty($entries)): ?>
-                        <tr><td colspan="6" class="text-center text-muted py-3">Nothing saved yet.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-3">Nothing saved yet.</td></tr>
                     <?php else: foreach ($entries as $e):
                         $plain = decrypt_data($e['password']);
                     ?>
                         <tr>
                             <td class="fw-bold"><i class="fas fa-<?= $category_icons[$e['category']] ?? 'key' ?> text-muted me-1"></i><?= sanitize($e['title']) ?></td>
                             <td><span class="badge bg-light text-dark"><?= sanitize($e['category']) ?></span></td>
+                            <td><?= $e['role'] ? sanitize($e['role']) : '<span class="text-muted">-</span>' ?></td>
                             <td><?= $e['username'] ? sanitize($e['username']) : '<span class="text-muted">-</span>' ?></td>
                             <td>
                                 <span class="locker-pw d-inline-flex align-items-center gap-1">

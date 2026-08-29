@@ -274,6 +274,10 @@ function category_module_map() {
             'defaults' => ['Salary', 'Tuition', 'Lend Given', 'Lend Received', 'Rent', 'Utility', 'Insurance', 'Other']],
         'digital_locker_category' => ['label' => 'Digital Locker Categories', 'targets' => [['digital_locker', 'category']],
             'defaults' => ['Social Media', 'Email', 'WiFi', 'App', 'Bank', 'Other']],
+        'digital_locker_role' => ['label' => 'Digital Locker Roles', 'targets' => [['digital_locker', 'role']],
+            'defaults' => ['Owner', 'Admin', 'Editor', 'Viewer', 'Member', 'Other']],
+        'notes' => ['label' => 'Note Categories', 'targets' => [['notes', 'category']],
+            'defaults' => ['General', 'Idea', 'Journal', 'Reference', 'Other']],
     ];
 }
 
