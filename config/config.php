@@ -12,7 +12,7 @@ define('DB_NAME', 'myself_db');
 
 // Application Settings
 define('APP_NAME', 'MySelf');
-define('BASE_URL', '/myself/');
+define('BASE_URL', '/personal/myself/');
 
 // Encryption key for sensitive data (Digital Locker passwords). Keep this secret;
 // changing it will make previously stored locker passwords undecryptable.
